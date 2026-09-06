@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Method - Loris Tartaglia</title>
+    
+    <!-- Stessi font della pagina principale -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;1,400&family=Poppins:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- STILI BASE CONDIVISI --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f7f6f2; /* Sfondo principale */
+            color: #2c2c2c;
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.8;
+        }
+
+        .header {
+            padding: 40px 20px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        /* --- MENU CONTATTI --- */
+        .contatti-fisso {
+            position: absolute;
+            top: 40px;
+            left: 5%;
+            z-index: 100;
+        }
+
+        .contatti-fisso summary {
+            color: #554117;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            letter-spacing: 1px;
+            list-style: none;
+            transition: color 0.3s;
+        }
+
+        .contatti-fisso summary:hover {
+            color: #8c6d33;
+        }
+
+        .contatti-dropdown-box {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            background-color: #ffffff;
+            border: 1px solid rgba(140, 109, 51, 0.2);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            border-radius: 6px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: max-content;
+            text-align: left;
+        }
+
+        .contatti-dropdown-box a {
+            color: #4a453d;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .contatti-dropdown-box a:hover {
+            color: #8c6d33;
+        }
+
+        /* --- MENU NAVIGAZIONE --- */
+        .menu-container {
+            position: absolute;
+            top: 40px;
+            right: 5%;
+            z-index: 100;
+        }
+
+        .menu-button {
+            background: transparent;
+            border: none;
+            color: #554117;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .menu-button:hover {
+            color: #8c6d33;
+        }
+
+        .menu-dropdown {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 8px);
+            background-color: #ffffff;
+            min-width: 140px;
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(140, 109, 51, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .menu-container.active .menu-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .menu-dropdown a {
+            display: block;
+            padding: 10px 16px;
+            color: #4a453d;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .menu-dropdown a:hover {
+            background-color: #f7f6f2;
+            color: #8c6d33;
+        }
+
+        /* --- TITOLI PAGINA --- */
+        .page-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: 4rem;
+            font-weight: 400;
+            margin-bottom: 10px;
+            color: #3b3326;
+        }
+
+        .page-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 1.1rem;
+            opacity: 0.8;
+            color: #6b5b45;
+        }
+
+        /* --- CONTENUTI SEZIONI (Adattati al nuovo stile) --- */
+        .content-container {
+            max-width: 1000px;
+            margin: 40px auto 80px;
+            padding: 0 25px;
+        }
+
+        section {
+            margin-bottom: 70px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            color: #8c6d33;
+            font-size: 2.2rem;
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 2px;
+            background-color: rgba(140, 109, 51, 0.4);
+            margin: 15px auto 0;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .text-content {
+            color: #4a453d;
+            font-size: 1.05rem;
+        }
+
+        .text-content p {
+            margin-bottom: 20px;
+        }
+
+        /* Capolettera elegante come nel profilo */
+        .text-content.dropcap p:first-of-type::first-letter {
+            font-family: 'Great Vibes', cursive;
+            font-size: 4.5rem;
+            float: left;
+            margin-right: 15px;
+            line-height: 0.8;
+            color: #8c6d33;
+            text-shadow: 1px 1px 5px rgba(140, 109, 51, 0.2);
+        }
+
+        .img-fluid {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(184, 150, 91, 0.2);
+        }
+
+        /* --- GRIGLIA SERVIZI ELEGANTE --- */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+
+        .service-card {
+            background-color: #ffffff;
+            border: 1px solid rgba(140, 109, 51, 0.2);
+            padding: 30px 25px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .service-card h3 {
+            font-family: 'Playfair Display', serif;
+            color: #8c6d33;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+        
+        .service-card p {
+            font-size: 0.95rem;
+            color: #6b5b45;
+        }
+
+        .method-section {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            border: 1px solid rgba(140, 109, 51, 0.2);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: #6b5b45;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(140, 109, 51, 0.2);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .page-title { font-size: 3.2rem; margin-top: 30px; }
+            .contatti-fisso { top: 25px; left: 20px; }
+            .menu-container { top: 20px; right: 20px; }
+            .grid-2 { grid-template-columns: 1fr; gap: 30px; }
+            .method-section { padding: 25px; }
+        }
+    </style>
+</head>
+
+<body>
+
+
+
+
+
+
+
+
+    <header class="header">
+        <!-- Contatti in alto a sinistra -->
+        <details class="contatti-fisso">
+            <summary>CONTACTS</summary>
+            <div class="contatti-dropdown-box">
+                <a href="mailto:tartaglia.winemaker@gmail.com">Email: tartaglia.winemaker@gmail.com</a >
+                <a href="tel:+393311141357">Phone: +39 331 114 1357</a >
+            </div>
+        </details>
+
+
+
+
+
+
+
+
+
+
+
+        <!-- Menu a tendina in alto a destra -->
+        <div class="menu-container" id="menuContainer">
+            <button class="menu-button" id="menuButton">MENU</button>
+            <div class="menu-dropdown">
+                <a href="index_en.html">Home</a >
+                <a href="profilo_en.html">Philosophy</a >
+                <a href="mondo_en.html">Journey</a >
+            </div>
+        </div>
+
+        <h1 class="page-title">The Method</h1>
+     
+    </header>
+
+    <div class="content-container">
+        
+        <!-- Sezione Azienda -->
+        <section>
+            <h2 class="section-title">The Activity</h2>
+            <div class="grid-2">
+                <div class="text-content dropcap">
+                    <p>From the vineyard to the bottle, we offer technical and strategic consulting to wineries to transform every vineyard into a successful project.</p >
+                    <p>We oversee the entire production chain, from planting the vines to the finished product, working on all types of wine: red, white, rosé, and sparkling, for both mid-range and high-end markets. Each label must possess a precise identity, recognizable quality, and specific uniqueness.</p >
+                    <p>The goal is to create products that captivate both the end consumer and the opinion leader, ensuring the full satisfaction of those who choose, buy, and taste the wine.</p >
+                </div>
+                <div>
+                    <!-- Sostituisci "foto-5.jpg" con il tuo file immagine corretto -->
+                    <img src="foto-5.jpg" alt="Loris Tartaglia Vineyard" class="img-fluid">
+                </div>
+            </div>
+        </section>
+
+        <!-- Sezione Servizi -->
+        <section>
+            <h2 class="section-title">Services</h2>
+            <p style="text-align: center; color: #6b5b45; max-width: 800px; margin: 0 auto;">
+                Understanding market tastes and mastering the most advanced oenological techniques is the starting point for every great label. We support companies in every production phase:
+            </p >
+            
+            <div class="services-grid">
+                <div class="service-card">
+                    <h3>Planting and management</h3>
+                    <p>Targeted agronomic choices to maximize the value of the local terroir.</p >
+                </div>
+                <div class="service-card">
+                    <h3>Cellar setup</h3>
+                    <p>Optimization of spaces and oenological equipment for an efficient workflow.</p >
+                </div>
+                <div class="service-card">
+                    <h3>Winemaking</h3>
+                    <p>Tailored care in the transformation process of grapes in the cellar and their aging.</p >
+                </div>
+                <div class="service-card">
+                    <h3>Wine evaluation</h3>
+                    <p>In-depth sensory analysis and technical control tastings.</p >
+                </div>
+                <div class="service-card">
+                    <h3>Quality control</h3>
+                    <p>Constant monitoring of chemical-physical characteristics through external laboratories.</p >
+                </div>
+                <div class="service-card">
+                    <h3>Public relations</h3>
+                    <p>Strategic contacts with industry press and market stakeholders.</p >
+                </div>
+            </div>
+        </section>
+
+        <!-- Sezione Metodo -->
+        <section>
+            <h2 class="section-title">Our Philosophy</h2>
+            <div class="method-section">
+                <div class="grid-2">
+                    <div>
+                        <!-- Sostituisci "foto-6.jpg" con il tuo file immagine corretto -->
+                        <img src="foto-6.jpg" alt="Cellar Detail" class="img-fluid">
+                    </div>
+                    <div class="text-content">
+                        <p>The priority of our consulting is the concrete and sustainable growth of the companies we collaborate with.</p >
+                        <p>We provide a path based on the pursuit of excellence, establishing a direct and human relationship with managers, winemakers, and cellar staff. This constant exchange allows us to transmit not only technique but, above all, passion.</p >
+                        <p>We seek evolution in every step: in vineyard planning, harvest care, and transformation. Because true business growth is built only through constant evolution.</p >
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+
+
+    <script>
+        // --- GESTIONE MENU A TENDINA ---
+        const menuContainer = document.getElementById('menuContainer');
+        const menuButton = document.getElementById('menuButton');
+
+        menuButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuContainer.classList.toggle('active');
+        });
+
+        // Chiude il menu se si clicca altrove nella pagina
+        document.addEventListener('click', () => {
+            if (menuContainer.classList.contains('active')) {
+                menuContainer.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,525 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intorno al Mondo - Loris Tartaglia</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;1,400&family=Poppins:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f7f6f2;
+            color: #2c2c2c;
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .header {
+            padding: 40px 20px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        /* --- MENU CONTATTI IN ALTO A SINISTRA --- */
+        .contatti-fisso {
+            position: absolute;
+            top: 40px;
+            left: 5%;
+            z-index: 100;
+        }
+
+        .contatti-fisso summary {
+            color: #554117;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-size: 1,1rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            letter-spacing: 1px;
+            list-style: none;
+            transition: color 0.3s;
+        }
+
+        .contatti-fisso summary:hover {
+            color: #8c6d33;
+        }
+
+        .contatti-dropdown-box {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            background-color: #ffffff;
+            border: 1px solid rgba(140, 109, 51, 0.2);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            border-radius: 6px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: max-content;
+            text-align: left;
+        }
+
+        .contatti-dropdown-box a {
+            color: #4a453d;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .contatti-dropdown-box a:hover {
+            color: #8c6d33;
+        }
+
+        /* --- MENU A TENDINA IN ALTO A DESTRA --- */
+        .menu-container {
+            position: absolute;
+            top: 40px;
+            right: 5%;
+            z-index: 100;
+        }
+
+        .menu-button {
+            background: transparent;
+            border: none;
+            color: #554117;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .menu-button:hover {
+            color: #8c6d33;
+            background-color: transparent;
+        }
+
+        .menu-dropdown {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 8px);
+            background-color: #ffffff;
+            min-width: 140px;
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(140, 109, 51, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .menu-container.active .menu-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .menu-dropdown a {
+            display: block;
+            padding: 10px 16px;
+            color: #4a453d;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .menu-dropdown a:first-child {
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+        }
+
+        .menu-dropdown a:last-child {
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+        }
+
+        .menu-dropdown a:hover {
+            background-color: #f7f6f2;
+            color: #8c6d33;
+        }
+
+        .page-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: 4rem;
+            font-weight: 400;
+            margin-bottom: 10px;
+            color: #3b3326;
+        }
+
+        .page-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 1.1rem;
+            opacity: 0.8;
+            color: #6b5b45;
+        }
+
+        /* --- EFFETTO SFERA / GLOBO --- */
+        .globe-wrapper {
+            width: 85vw; 
+            max-width: 550px;
+            aspect-ratio: 1 / 1; 
+            margin: 30px auto;
+            border-radius: 50%; 
+            overflow: hidden;
+            position: relative;
+            
+            box-shadow: 
+                inset -25px -25px 50px rgba(0, 0, 0, 0.15), 
+                inset 10px 10px 30px rgba(255, 255, 255, 0.8),
+                0 10px 30px rgba(0, 0, 0, 0.1);
+            
+            border: 2px solid rgba(184, 150, 91, 0.2);
+            transform: translateZ(0); 
+        }
+
+        .globe-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%;
+            box-shadow: inset -35px -35px 50px rgba(0, 0, 0, 0.12), inset 15px 15px 30px rgba(255, 255, 255, 0.6);
+            pointer-events: none; 
+            z-index: 10;
+        }
+
+        #map-container {
+            width: 100%;
+            height: 100%;
+            background-color: #e8e4dc; 
+            z-index: 1;
+        }
+
+        /* --- CONTROLLI ZOOM PERSONALIZZATI --- */
+        .leaflet-top.leaflet-right {
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            right: 15px !important; 
+            margin: 0 !important;
+        }
+
+        .leaflet-control-zoom {
+            border: none !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+            margin: 0 !important;
+        }
+        .leaflet-control-zoom a {
+            background-color: #ffffff !important;
+            color: #8c6d33 !important; 
+            border-color: rgba(140, 109, 51, 0.2) !important;
+            transition: background-color 0.3s;
+        }
+        .leaflet-control-zoom a:hover {
+            background-color: #f0ece1 !important;
+        }
+
+        /* --- MARKER E POPUP --- */
+        .custom-pin {
+            background-color: #9c7a38; 
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 10px rgba(156, 122, 56, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(156, 122, 56, 0.6); }
+            70% { box-shadow: 0 0 0 10px rgba(156, 122, 56, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(156, 122, 56, 0); }
+        }
+
+        .leaflet-popup-content-wrapper {
+            background-color: #ffffff;
+            color: #2c2c2c;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            border: 1px solid rgba(140, 109, 51, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+        .leaflet-popup-tip {
+            background-color: #ffffff;
+        }
+        .leaflet-popup-content {
+            margin: 12px 15px;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+        .leaflet-popup-content strong {
+            color: #8c6d33; 
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 0;
+        }
+
+        /* --- SEZIONE RACCONTO --- */
+        .story-section {
+            max-width: 800px;
+            margin: 40px auto 60px;
+            padding: 0 25px;
+            line-height: 1.8;
+            font-size: 1.05rem;
+            color: #4a453d;
+        }
+
+        .story-section p {
+            margin-bottom: 25px;
+        }
+
+        .story-section p:first-of-type::first-letter {
+            font-family: 'Great Vibes', cursive;
+            font-size: 4.5rem;
+            float: left;
+            margin-right: 15px;
+            line-height: 0.8;
+            color: #8c6d33;
+            text-shadow: 1px 1px 5px rgba(140, 109, 51, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .page-title { font-size: 3.2rem; margin-top: 30px; }
+            .contatti-fisso { top: 25px; left: 20px; }
+            .menu-container { top: 20px; right: 20px; }
+            .globe-wrapper { width: 92vw; }
+            .story-section { font-size: 0.95rem; margin-top: 20px; }
+        }
+    </style>
+</head>
+
+
+
+<body>
+
+    <header class="header">
+        
+        <!-- Contatti in alto a sinistra -->
+        <details class="contatti-fisso">
+            <summary>CONTATTI</summary>
+            <div class="contatti-dropdown-box">
+                <a href=" ">Email: tartaglia.winemaker@gmail.com</a >
+                <a href="tel:+393311141357">Telefono: +39 331 114 1357</a >
+            </div>
+        </details>
+
+        <!-- Menu a tendina in alto a destra -->
+        <div class="menu-container" id="menuContainer">
+            <button class="menu-button" id="menuButton">MENU</button>
+            <div class="menu-dropdown">
+                <a href="index.html">Home</a >
+                <a href="profilo.html">Filosofia</a >
+                <a href="metodo.html">Visione</a >
+            </div>
+        </div>
+
+        <h1 class="page-title">Intorno al Mondo</h1>
+        <p class="page-subtitle">I luoghi</p >
+    </header>
+
+    <div class="globe-wrapper">
+        <div class="globe-overlay"></div>
+        <div id="map-container"></div>
+    </div>
+
+    <section class="story-section" style="text-align: center;">
+        <p>Un itinerario di scoperte e visioni uniche traccia un percorso che attraversa confini, culture e tradizioni profondamente diverse. Un viaggio che si sviluppa tra le terre estreme dei due emisferi, raccogliendo la forza primordiale del deserto di Atacama e i silenzi immensi del Gobi.</p >
+        
+        <p>La rotta prosegue toccando i panorami incontaminati della Nuova Zelanda e le radici profonde dell'Africa nera, per poi spaziare dall'innovazione dinamica degli Stati Uniti fino alla sapienza millenaria della vecchia Europa.</p >
+        
+        <p>Ogni vendemmia rappresenta una sfida nuova e irripetibile che arricchisce questo cammino, lasciando un frammento di DNA in ogni singola bottiglia per custodire l'autenticità di ogni singolo luogo vissuto.</p >
+    </section>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // --- GESTIONE MENU A TENDINA ---
+        const menuContainer = document.getElementById('menuContainer');
+        const menuButton = document.getElementById('menuButton');
+
+        menuButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuContainer.classList.toggle('active');
+        });
+
+        // Chiude il menu se si clicca altrove nella pagina
+        document.addEventListener('click', () => {
+            if (menuContainer.classList.contains('active')) {
+                menuContainer.classList.remove('active');
+            }
+        });
+
+        // --- MAPPA E GLOBO ---
+        const map = L.map('map-container', {
+            zoomControl: false, 
+            attributionControl: false, 
+            scrollWheelZoom: false, 
+            worldCopyJump: true, 
+            minZoom: 2,           
+            maxZoom: 6,
+            maxBounds: [[-75, -Infinity], [75, Infinity]],
+            maxBoundsViscosity: 1.0
+        }).setView([20.0, 10.0], 2); 
+
+        L.control.zoom({
+            position: 'topright'
+        }).addTo(map);
+
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 10,
+            minZoom: 1,
+            noWrap: false 
+        }).addTo(map);
+
+        const customIcon = L.divIcon({
+            className: 'custom-pin',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+        });
+
+        const locations = [
+            // ITALIA
+            { coords: [46.1000, 13.1167], title: "Friuli, Italia" },
+            { coords: [45.4340, 11.3200], title: "Veneto, Italia" },
+            { coords: [43.7695, 11.2558], title: "Toscana, Italia" },
+            { coords: [43.6167, 13.5167], title: "Marche, Italia" },
+            { coords: [42.9333, 12.6333], title: "Umbria, Italia" },
+            { coords: [44.1333, 12.2500], title: "Romagna, Italia" },
+
+            // FRANCIA
+            { coords: [44.8377, -0.5791], title: "Bordeaux, Francia" },
+            { coords: [44.0500, 4.8000], title: "Côtes du Rhône, Francia" },
+            { coords: [43.4000, 3.2000], title: "Languedoc-Roussillon, Francia" },
+
+
+
+
+
+            { coords: [44.1733, 5.2789], title: "Mont Ventoux, Francia" },
+     
+
+
+
+
+
+
+
+
+
+
+
+
+            // USA
+            { coords: [44.9429, -123.0351], title: "Oregon, USA" },
+            { coords: [38.2975, -122.2868], title: "California, USA" },
+
+            // ARGENTINA
+            { coords: [-32.8908, -68.8272], title: "Mendoza, Argentina" },
+            { coords: [-28.4696, -65.7852], title: "Catamarca, Argentina" },
+            { coords: [-24.7821, -65.4232], title: "Salta, Argentina" },
+
+            // NUOVA ZELANDA
+            { coords: [-41.5134, 173.9612], title: "Marlborough, Nuova Zelanda" },
+            { coords: [-39.6433, 176.8450], title: "Hawke's Bay, Nuova Zelanda" },
+
+            // SUD AFRICA
+            { coords: [-33.9249, 18.4241], title: "Cape Town, Sud Africa" },
+
+            // CINA
+            { coords: [37.5333, 121.3900], title: "Shandong, Cina" },
+            { coords: [42.9333, 89.1833], title: "Turpan, Cina" }
+        ];
+
+        locations.forEach(loc => {
+            L.marker(loc.coords, { icon: customIcon })
+             .addTo(map)
+             .bindPopup(`<strong>${loc.title}</strong>`);
+        });
+
+        // --- GESTIONE ROTAZIONE E RESET ---
+        let currentLng = 10.0;
+        const rotationSpeed = 0.25; 
+        let rotationInterval = null;
+
+        function rotateMap() {
+            currentLng += rotationSpeed;
+            if (currentLng > 180) {
+                currentLng -= 360; 
+            }
+            map.setView([20.0, currentLng], map.getZoom(), { animate: false });
+        }
+
+        function startRotation() {
+            if (!rotationInterval) {
+                rotationInterval = setInterval(rotateMap, 40);
+            }
+        }
+
+        function stopRotation() {
+            clearInterval(rotationInterval);
+            rotationInterval = null;
+        }
+
+        startRotation();
+
+        const globeWrapper = document.querySelector('.globe-wrapper');
+
+        globeWrapper.addEventListener('mouseenter', () => {
+            stopRotation();
+        });
+
+        globeWrapper.addEventListener('mouseleave', () => {
+            map.closePopup();
+            currentLng = 10.0;
+            map.setView([20.0, 10.0], 2, { animate: true, duration: 1.0 });
+            setTimeout(() => {
+                startRotation();
+            }, 1000);
+        });
+
+        let isInteracting = false;
+
+        globeWrapper.addEventListener('touchstart', () => {
+            stopRotation();
+            isInteracting = true;
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            if (isInteracting && e.touches.length === 0) {
+                setTimeout(() => {
+                    map.closePopup();
+                    currentLng = 10.0;
+                    map.setView([20.0, 10.0], 2, { animate: true, duration: 1.0 });
+                    setTimeout(() => {
+                        startRotation();
+                    }, 1000);
+                    isInteracting = false;
+                }, 400);
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+

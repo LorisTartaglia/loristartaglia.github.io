@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loris Tartaglia - Winemaking Consulting</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.gstatic.com/s/greatvibes/v18/RWmMoDRPKxDv6rCYjPjUGdtpWZzaTQ.woff2" as="font" type="font/woff2" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;1,400&family=Poppins:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS Leaflet per la Mappa -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        html { scroll-behavior: smooth; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: #f7f6f2;
+            color: #2c2c2c;
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- LOGO DI SFONDO FLUTTUANTE --- */
+        .bg-logo {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1; opacity: 0.04; pointer-events: none; user-select: none; overflow: hidden;
+        }
+        .logo-wrapper { position: relative; display: flex; justify-content: center; align-items: center; transition: transform 55s ease-in-out; }
+        .letter-l, .letter-t { font-family: 'Great Vibes', cursive; position: absolute; line-height: 1; color: #3b3326; }
+        .letter-l { font-size: 75vh; transform: translate(-20%, -5%); z-index: 2; }
+        .letter-t { font-size: 65vh; transform: translate(15%, 5%); z-index: 1; }
+
+        /* --- BARRA SUPERIORE FISSA --- */
+        .top-bar {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 60px;
+            background-color: rgba(247, 246, 242, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(140, 109, 51, 0.2);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 40px; z-index: 1000;
+        }
+
+        .top-bar-left {
+            font-family: 'Playfair Display', serif; font-size: 1.2rem;
+            color: #554117; font-weight: 600; letter-spacing: 0.5px;
+        }
+
+        .top-bar-right { display: flex; align-items: center; gap: 20px; position: relative; }
+
+        /* --- SELETTORE LINGUA --- */
+        .lang-switcher {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .lang-switcher a {
+            color: #6b5b45;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .lang-switcher a.active, .lang-switcher a:hover {
+            color: #8c6d33;
+        }
+
+        .contatti-tendina-top summary {
+            color: #554117; text-transform: uppercase; cursor: pointer;
+            font-size: 1rem; font-weight: 700; list-style: none; transition: color 0.3s;
+        }
+        .contatti-tendina-top summary:hover { color: #8c6d33; }
+
+        .contatti-dropdown {
+            position: absolute; top: calc(100% + 18px); right: 0;
+            background-color: #ffffff; border: 1px solid rgba(140, 109, 51, 0.2);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08); border-radius: 5px;
+            padding: 15px; display: flex; flex-direction: column; gap: 12px; min-width: max-content;
+        }
+        .contatti-dropdown a { color: #554117; text-decoration: none; font-size: 14px; transition: color 0.3s; }
+        .contatti-dropdown a:hover { color: #8c6d33; }
+
+        /* --- CONTENUTO CENTRALE --- */
+        .content { position: relative; z-index: 10; margin-left: 15%; max-width: 600px; }
+        .main-title {
+            font-family: 'Great Vibes', cursive; font-size: 5rem; font-weight: 400; margin-bottom: 5px;
+            background: linear-gradient(90deg, #3b3326, #8c6d33, #5a4929, #8c6d33, #3b3326);
+            background-size: 400% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(2px 2px 15px rgba(140, 109, 51, 0.15)); 
+            opacity: 0; animation: fadeIn 1.5s ease-in-out forwards, gradientMove 15s ease-in-out infinite;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .subtitle { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.2rem; margin-bottom: 50px; color: #6b5b45; }
+
+        /* --- NAVIGAZIONE DESKTOP --- */
+        .main-nav { display: flex; flex-direction: column; gap: 20px; }
+        .main-nav a { text-decoration: none; color: #554117; font-size: 1.1rem; font-weight: 700; text-transform: uppercase; transition: all 0.3s ease; width: fit-content; }
+        .main-nav a:hover { color: #8c6d33; transform: translateX(5px); }
+        .menu-checkbox, .menu-label { display: none; }
+        .sparkle-icon { position: absolute; bottom: 50px; right: 80px; font-size: 3rem; color: #8c6d33; opacity: 0.25; z-index: 5; user-select: none; }
+
+        .testo-citazione { position: absolute; bottom: 50px; right: 50px; text-align: center; font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.1rem; opacity: 0.75; z-index: 10; color: #554a3c; }
+
+        /* --- COPYRIGHT DESKTOP --- */
+        .copyright { position: absolute; bottom: 20px; left: 40px; font-family: 'Poppins', sans-serif; font-size: 0.8rem; color: #554117; opacity: 0.8; z-index: 50; }
+
+        /* --- SEZIONI PER MOBILE --- */
+        .mobile-sections { display: none; }
+
+        .story-photo { width: 100%; height: 250px; background-color: #e8e4dc; border-radius: 6px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: 1px solid rgba(140, 109, 51, 0.15); margin: 30px 0; }
+        .story-photo img { width: 100%; height: 100%; object-fit: cover; filter: sepia(10%) contrast(105%); }
+        .mobile-section h3 { font-family: 'Playfair Display', serif; color: #554117; font-size: 1.6rem; margin: 40px 0 20px; text-align: left; }
+        .highlight-quote { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.15rem; color: #8c6d33; text-align: center; margin: 40px 0; padding: 20px 0; border-top: 1px solid rgba(140, 109, 51, 0.3); border-bottom: 1px solid rgba(140, 109, 51, 0.3); }
+
+        .story-section { text-align: left; font-size: 0.95rem; line-height: 1.8; color: #4a453d; margin-top: 20px; }
+        .story-section p { margin-bottom: 20px; text-align: left; }
+        .story-section p.first-paragraph::first-letter { font-family: 'Great Vibes', cursive; font-size: 4.5rem; float: left; margin-right: 15px; line-height: 0.8; color: #8c6d33; text-shadow: 1px 1px 5px rgba(140, 109, 51, 0.2); }
+
+        .services-grid-mobile { display: grid; grid-template-columns: 1fr; gap: 20px; margin: 30px 0; }
+        .service-card-mobile { background-color: #ffffff; border: 1px solid rgba(140, 109, 51, 0.2); padding: 25px 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); }
+        .service-card-mobile h4 { font-family: 'Playfair Display', serif; color: #8c6d33; font-size: 1.2rem; margin-bottom: 10px; }
+        .service-card-mobile p { font-size: 0.9rem; color: #6b5b45; margin-bottom: 0 !important; }
+
+        /* --- STILI SEZIONE MONDO --- */
+        .globe-wrapper { width: 100%; max-width: 500px; aspect-ratio: 1 / 1; min-height: 350px; margin: 20px auto; border-radius: 50%; overflow: hidden; position: relative; box-shadow: inset -25px -25px 50px rgba(0, 0, 0, 0.15), inset 10px 10px 30px rgba(255, 255, 255, 0.8), 0 10px 30px rgba(0, 0, 0, 0.1); border: 2px solid rgba(184, 150, 91, 0.2); transform: translateZ(0); }
+        .globe-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; box-shadow: inset -35px -35px 50px rgba(0, 0, 0, 0.12), inset 15px 15px 30px rgba(255, 255, 255, 0.6); pointer-events: none; z-index: 10; }
+        #map-container { width: 100%; height: 100%; background-color: #e8e4dc; z-index: 1; }
+        .leaflet-top.leaflet-right { top: 50% !important; transform: translateY(-50%) !important; right: 10px !important; margin: 0 !important; }
+        .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
+        .leaflet-control-zoom a { background-color: #ffffff !important; color: #8c6d33 !important; border-color: rgba(140, 109, 51, 0.2) !important; }
+        .custom-pin { background-color: #9c7a38; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 0 10px rgba(156, 122, 56, 0.5); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(156, 122, 56, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(156, 122, 56, 0); } 100% { box-shadow: 0 0 0 0 rgba(156, 122, 56, 0); } }
+        .leaflet-popup-content-wrapper { border-radius: 8px; border: 1px solid rgba(140, 109, 51, 0.3); font-family: 'Poppins', sans-serif; }
+        .leaflet-popup-content { text-align: center; margin: 10px; }
+        .leaflet-popup-content strong { color: #8c6d33; font-family: 'Playfair Display', serif; font-size: 1.1rem; }
+
+        /* --- MOBILE RESPONSIVE --- */
+        @media (max-width: 768px) {
+            body { display: block; overflow-y: auto; overflow-x: hidden; }
+            .bg-logo { position: fixed; }
+            
+            .top-bar { padding: 0 20px; }
+            .top-bar-left { font-size: 1rem; }
+            .hide-mobile { display: none; }
+            
+            .content { margin-left: 5%; padding: 0 20px; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; margin-bottom: 0; padding-top: 60px; }
+            .main-title { font-size: 2.8rem; }
+            .subtitle { font-size: 1rem; margin-bottom: 30px; }
+            .letter-l { font-size: 50vh; transform: translate(-10%, -5%); }
+            .letter-t { font-size: 40vh; transform: translate(10%, 5%); }
+            .sparkle-icon { display: none; }
+            
+            .menu-label { display: inline-block; cursor: pointer; color: #554117; font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; }
+            .main-nav { display: none; gap: 15px; padding-left: 15px; border-left: 1px solid rgba(140, 109, 51, 0.3); }
+            .menu-checkbox:checked ~ .main-nav { display: flex; }
+            
+            .testo-citazione { position: relative; bottom: auto; left: auto; right: auto; width: 84%; margin-left: 8%; text-align: left; font-size: 0.85rem; margin-bottom: 50px; margin-top: 40px; }
+            .desktop-br { display: none; }
+
+            .mobile-sections { display: block; width: 100%; position: relative; z-index: 10; background-color: transparent; }
+            .mobile-section { min-height: 100vh; padding: 60px 8% 60px 8%; display: flex; flex-direction: column; justify-content: center; border-top: 1px solid rgba(140, 109, 51, 0.2); }
+            .mobile-section h2 { color: #8c6d33; font-family: 'Great Vibes', cursive; font-size: 3rem; }
+
+            .copyright { position: relative; bottom: 0; left: 0; padding: 25px 8%; text-align: left; width: 100%; border-top: 1px solid rgba(140, 109, 51, 0.2); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="top-bar">
+        <div class="top-bar-left">
+            Loris Tartaglia <span class="hide-mobile">| Winemaking Consulting</span>
+        </div>
+        <div class="top-bar-right">
+            <div class="lang-switcher">
+                <a href="index.html">IT</a > / <a href="index_en.html" class="active">EN</a >
+            </div>
+            <details class="contatti-tendina-top">
+                <summary>CONTACTS</summary>
+                <div class="contatti-dropdown">
+                    <a href="mailto:tartaglia.winemaker@gmail.com">Email: tartaglia.winemaker@gmail.com</a >
+                    <a href="tel:+393311141357">Phone: +39 331 114 1357</a >
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <div class="bg-logo">
+        <div class="logo-wrapper"><span class="letter-t">T</span><span class="letter-l">L</span></div>
+    </div>
+
+    <div class="content">
+        <h1 class="main-title">Loris Tartaglia</h1>
+        <p class="subtitle">Tailored solutions to create unique wines</p >
+        
+        <input type="checkbox" id="menu-toggle" class="menu-checkbox">
+        <label for="menu-toggle" class="menu-label">☰ MENU</label>
+        
+        <nav class="main-nav">
+            <a id="link-profilo" href="profilo_en.html">Philosophy</a >
+            <a id="link-metodo" href="metodo_en.html">Vision</a >
+            <a id="link-mondo" href="mondo_en.html">Journey</a >
+        </nav>
+    </div>
+
+    <div class="sparkle-icon">✦</div>
+
+    <div class="testo-citazione">
+        <p>We do not force nature, we interpret its essence, we listen to its breath to translate its soul.<br class="desktop-br">
+        Every bottle is a journey waiting to be lived.</p >
+    </div>
+
+
+    <div class="mobile-sections">
+        <section id="profilo" class="mobile-section">
+            <h2>About</h2>
+            <div class="story-photo">
+                <img src="foto-1.jpg" alt="Loris in the vineyard - Main Photo">
+            </div>
+            <div class="story-section">
+                <p class="first-paragraph">Wine has never been just a profession, but a language through which to decipher the world. My story originates from the earth, from observing natural cycles and recognizing that every soil possesses a unique voice, waiting to be heard and understood. My educational path started from technical and agronomic fundamentals, but found its true vocation only when theory met the hard work and magic of the harvest.</p >
+                <h3>A Global Experience</h3>
+                <p>To fully understand the potential of the vine, I felt the need to transcend traditional borders. From the extreme climates of the southern hemisphere to the historic cellars of the old continent, I have had the privilege of engaging with deeply contrasting production philosophies. This total immersion in diverse terroirs has shaped my sensibility, teaching me the art of adaptability: not imposing a pre-established method, but shaping technique to the specific needs of the grape and the vintage.</p >
+                <div class="story-photo">
+                    <img src="foto-2.jpg" alt="Loris in the cellar during tastings">
+                </div>
+                <div class="highlight-quote">
+                    "The role of the winemaker is not to dominate the matter, but to accompany it towards its maximum expression, safeguarding the soul of the territory."
+                </div>
+                <h3>Choice and Style</h3>
+                <p>Today, my winemaking vision is based on three pillars: respect, purity, and identity. I firmly believe in a cellar approach that is as respectful as possible, where technique acts as a shield to protect the integrity of the fruit, never as a mask to alter its characteristics. My stylistic choice shuns standardization: I seek wines that possess tension, elegance, and vibrant territorial adherence.</p >
+                <div class="story-photo">
+                    <img src="foto-3.jpg" alt="Detail of grape clusters or hands in the must">
+                </div>
+                <p>Collaborating with companies means entering their history on tip-toes, analyzing their unexpressed potential, and translating it into wines capable of evoking emotion, defying time, and uncompromisingly telling the story of their origin.</p >
+            </div>
+            <div class="story-photo">
+                <img src="foto-4.jpg" alt="Loris during an experience abroad">
+            </div>
+        </section>
+
+        <section id="metodo" class="mobile-section">
+            <h2>Method</h2>
+            <div class="story-section">
+                <h3>The Activity</h3>
+                <p class="first-paragraph">From the field path to the bottle, we offer technical and strategic consulting to wine companies to turn every vineyard into a successful project.</p >
+                <p>We follow the entire production chain, from vineyard planting to the finished product, working on every type of wine: red, white, rosé, and sparkling, for both mid-range and high-end markets. Each label must possess a precise identity, recognizable quality, and specific uniqueness.</p >
+                <p>The goal is to create products capable of captivating both the end consumer and the opinion leader, ensuring the full satisfaction of those who choose, buy, and enjoy the wine.</p >
+                <div class="story-photo">
+                    <img src="foto-5.jpg" alt="Loris Tartaglia Vineyard">
+                </div>
+                <h3>Services</h3>
+                <p>Knowing market tastes and mastering the most advanced winemaking techniques is the starting point for every great label. We support companies through every stage of production:</p >
+                <div class="services-grid-mobile">
+                    <div class="service-card-mobile">
+                        <h4>Planting & Management</h4>
+                        <p>Targeted agronomic choices to maximize the value of the home terroir.</p >
+                    </div>
+                    <div class="service-card-mobile">
+                        <h4>Cellar Setup</h4>
+                        <p>Optimization of spaces and winemaking equipment for an efficient workflow.</p >
+                    </div>
+                    <div class="service-card-mobile">
+                        <h4>Vinification</h4>
+                        <p>Tailored care of grape transformation processes in the cellar and their aging.</p >
+                    </div>
+                    <div class="service-card-mobile">
+                        <h4>Wine Examination</h4>
+                        <p>In-depth sensory analysis and technical control tastings.</p >
+                    </div>
+                    <div class="service-card-mobile">
+                        <h4>Quality Control</h4>
+                        <p>Constant monitoring of chemical-physical characteristics through external laboratories.</p >
+                    </div>
+                    <div class="service-card-mobile">
+                        <h4>Public Relations</h4>
+                        <p>Strategic contacts with trade press and market stakeholders.</p >
+                    </div>
+                </div>
+                <h3>Our Philosophy</h3>
+                <p>The priority of our consulting is the concrete and sustainable growth of the companies we partner with.</p >
+                <p>We provide a pathway based on the pursuit of excellence, establishing a direct and human relationship with managers, winemakers, and cellar staff. This constant exchange allows us to transmit not only technique, but above all, passion.</p >
+                <div class="story-photo">
+                    <img src="foto-6.jpg" alt="Cellar Detail">
+                </div>
+                <p>We seek evolution at every step: in vineyard planning, harvest care, and transformation. Because true business growth is built only through constant evolution.</p >
+            </div>
+        </section>
+
+        <section id="mondo" class="mobile-section">
+            <h2>Around the World</h2>
+            <div class="globe-wrapper">
+                <div class="globe-overlay"></div>
+                <div id="map-container"></div>
+            </div>
+            <div class="story-section">
+                <p>An itinerary of discoveries and unique visions traces a path crossing deeply different borders, cultures, and traditions. A journey unfolding across the extreme lands of both hemispheres, gathering the primordial strength of the Atacama Desert and the immense silences of the Gobi.</p >
+                <p>The route continues touching the pristine landscapes of New Zealand and the deep roots of Africa, ranging from the dynamic innovation of the United States to the millennial wisdom of old Europe.</p >
+                <p>Every harvest represents a new and unrepeatable challenge that enriches this path, leaving a fragment of DNA in every single bottle to preserve the authenticity of every place experienced.</p >
+            </div>
+        </section>
+    </div>
+
+    <div class="copyright">
+        &copy; 2026 Loris Tartaglia. All rights reserved.
+    </div>
+
+    <!-- SCRIPT 1: INTERFACCIA E NAVIGAZIONE -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            function adattaNavigazione() {
+                const linkProfilo = document.getElementById("link-profilo");
+                const linkMetodo = document.getElementById("link-metodo");
+                const linkMondo = document.getElementById("link-mondo");
+                if (window.innerWidth <= 768) {
+                    linkProfilo.href = "#profilo"; linkMetodo.href = "#metodo"; linkMondo.href = "#mondo";
+                } else {
+                    linkProfilo.href = "profilo_en.html"; linkMetodo.href = "metodo_en.html"; linkMondo.href = "mondo_en.html";
+                }
+            }
+            window.addEventListener("resize", adattaNavigazione);
+            adattaNavigazione();
+
+            document.querySelectorAll('.main-nav a').forEach(link => {
+                link.addEventListener('click', function(e) { 
+                    if (window.innerWidth <= 768) {
+                        e.preventDefault(); 
+                        const targetId = this.getAttribute('href').replace('#', '');
+                        const targetSection = document.getElementById(targetId);
+                        if (targetSection) {
+                            targetSection.scrollIntoView({ behavior: 'smooth' });
+                            document.getElementById('menu-toggle').checked = false;
+                        }
+                    } 
+                });
+            });
+
+            const logo = document.querySelector('.logo-wrapper');
+            function randomSwim() { logo.style.transform = `translate(${(Math.random()*10)-5}vw, ${(Math.random()*10)-5}vh) rotate(${(Math.random()*4)-2}deg)`; }
+            setTimeout(randomSwim, 100);
+            setInterval(randomSwim, 55000);
+        });
+    </script>
+
+    <!-- SCRIPT 2: MAPPA LEAFLET -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const map = L.map('map-container', {
+                zoomControl: false, attributionControl: false, scrollWheelZoom: false, 
+                worldCopyJump: true, minZoom: 2, maxZoom: 6,
+                maxBounds: [[-75, -Infinity], [75, Infinity]], maxBoundsViscosity: 1.0
+            }).setView([20.0, 10.0], 2); 
+
+            L.control.zoom({ position: 'topright' }).addTo(map);
+
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 10, minZoom: 1, noWrap: false 
+            }).addTo(map);
+
+            const customIcon = L.divIcon({ className: 'custom-pin', iconSize: [14, 14], iconAnchor: [7, 7] });
+
+            const locations = [
+                { coords: [46.1000, 13.1167], title: "Friuli, Italy" },
+                { coords: [44.8377, -0.5791], title: "Bordeaux, France" },
+                { coords: [44.9429, -123.0351], title: "Oregon, USA" },
+                { coords: [-32.8908, -68.8272], title: "Mendoza, Argentina" },
+                { coords: [-41.5134, 173.9612], title: "Marlborough, New Zealand" },
+                { coords: [-39.6433, 176.8450], title: "Hawke's Bay, New Zealand" },
+                { coords: [-33.9249, 18.4241], title: "Cape Town, South Africa" },
+                { coords: [37.5333, 121.3900], title: "Shandong, China" },
+                { coords: [-28.4696, -65.7795], title: "Catamarca, Argentina" },
+                { coords: [-24.7859, -65.4117], title: "Salta, Argentina" },
+                { coords: [42.9333, 89.1833], title: "Turpan, China" },
+                { coords: [45.4384, 10.9916], title: "Veneto, Italy" },
+                { coords: [43.6158, 13.5189], title: "Marche, Italy" },
+                { coords: [43.3188, 11.3308], title: "Tuscany, Italy" },
+                { coords: [44.1391, 12.2432], title: "Romagna, Italy" },
+                { coords: [38.2975, -122.2869], title: "California, USA" },
+                { coords: [44.1500, 4.8000], title: "Côtes du Rhône, France" },
+                { coords: [43.3500, 3.2167], title: "Languedoc-Roussillon, France" },
+                { coords: [44.1733, 5.2789], title: "Mont Ventoux, France" }
+            ];
+
+            locations.forEach(loc => { L.marker(loc.coords, { icon: customIcon }).addTo(map).bindPopup(`<strong>${loc.title}</strong>`); });
+
+            let currentLng = 10.0;
+            let rotationInterval = null;
+
+            function rotateMap() {
+                currentLng += 0.25;
+                if (currentLng > 180) currentLng -= 360; 
+                map.setView([20.0, currentLng], map.getZoom(), { animate: false });
+            }
+
+            function startRotation() { if (!rotationInterval) rotationInterval = setInterval(rotateMap, 40); }
+            function stopRotation() { clearInterval(rotationInterval); rotationInterval = null; }
+
+            startRotation();
+
+            const globeWrapper = document.querySelector('.globe-wrapper');
+            globeWrapper.addEventListener('mouseenter', stopRotation);
+            globeWrapper.addEventListener('mouseleave', () => {
+                map.closePopup();
+                currentLng = 10.0;
+                map.setView([20.0, 10.0], 2, { animate: true, duration: 1.0 });
+                setTimeout(startRotation, 1000);
+            });
+            
+            const mapSection = document.getElementById('mondo');
+            if (mapSection) {
+                const mapObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            setTimeout(() => { map.invalidateSize(); }, 200);
+                        }
+                    });
+                }, { threshold: 0.1 });
+                mapObserver.observe(mapSection);
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
